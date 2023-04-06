@@ -17,9 +17,12 @@ import com.plcoding.cleanarchitecturenoteapp.ui.theme.CleanArchitectureNoteAppTh
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.lang.Thread.sleep
 
 @HiltAndroidTest
 @UninstallModules(AppModule::class)
@@ -149,5 +152,45 @@ class EndToEndTest {
             .assertTextContains("2")
         composeRule.onAllNodesWithTag(TestTags.NOTE_ITEM)[2]
             .assertTextContains("1")
+    }
+
+    @Test
+    fun deleteNote_noteRemovedFromList(){
+        composeRule.onNodeWithContentDescription("Add").performClick()
+
+        //Enter text in title and content text fields
+        composeRule
+            .onNodeWithTag(TestTags.TITLE_TEXT_FIELD)
+            .performTextInput("test-title")
+        composeRule
+            .onNodeWithTag(TestTags.CONTENT_TEXT_FIELD)
+            .performTextInput("test-content")
+        //Save the note
+        composeRule.onNodeWithContentDescription("Save").performClick()
+        //assert that note is inserted
+        composeRule
+            .onNodeWithText("test-title")
+            .assertExists()
+        //click to delete note
+        composeRule.onAllNodesWithContentDescription("Delete")[0].performClick()
+        //assert that note is Deleted
+        composeRule
+            .onNodeWithText("test-title")
+            .assertDoesNotExist()
+        runBlocking {
+            delay(1000L)
+        }
+        //click undo button when snackbar is displayed
+        composeRule
+            .onNodeWithText("Undo")
+            .performClick()
+        //assert that note is reinserted
+        runBlocking {
+            delay(1000L)
+        }
+        composeRule
+            .onNodeWithText("test-title")
+            .assertExists()
+
     }
 }
